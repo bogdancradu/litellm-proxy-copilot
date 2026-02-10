@@ -1,0 +1,5 @@
+# Runtime dependencies for running the proxy and scripts locally
+litellm[proxy,extra_proxy,semantic-router,github]
+requests
+fastapi
+uvicorn

@@ -1,0 +1,93 @@
+# LiteLLM Proxy config for GitHub Copilot
+# See https://docs.litellm.ai/docs/providers/github_copilot
+
+server_settings:
+  host: 0.0.0.0
+  port: 4000
+
+general_settings:
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+
+litellm_settings:
+  drop_params: true
+  suppress_debug_info: true
+  allow_user_passed_model: true
+  set_verbose: true
+  json_logs: false
+
+  # Enable the MCP semantic tool filter hook
+  mcp_semantic_tool_filter:
+    enabled: true
+    embedding_model: github_copilot/text-embedding-3-small
+    top_k: 5
+    similarity_threshold: 0.3
+
+model_list:
+  # Primary model: Claude Opus 4.6 with fallback to Gemini 3 Pro Preview
+  - model_name: github_copilot/claude-opus-4.6
+    litellm_params:
+      model: github_copilot/claude-opus-4.6
+      supports_tool_calling: true
+      fallbacks: ["github_copilot/gemini-3-pro-preview", "github_copilot/gpt-5-mini"]
+      extra_headers:
+        Editor-Version: "vscode/1.85.1"
+        Editor-Plugin-Version: "copilot/1.155.0"
+        User-Agent: "GithubCopilot/1.155.0"
+
+  # Fallback model: Gemini 3 Pro Preview with fallback to GPT-5 Mini
+  - model_name: github_copilot/gemini-3-pro-preview
+    litellm_params:
+      model: github_copilot/gemini-3-pro-preview
+      supports_tool_calling: true
+      fallbacks: ["github_copilot/gpt-5-mini"]
+      extra_headers:
+        Editor-Version: "vscode/1.85.1"
+        Editor-Plugin-Version: "copilot/1.155.0"
+        User-Agent: "GithubCopilot/1.155.0"
+
+  # Last resort fallback: GPT-5 Mini
+  - model_name: github_copilot/gpt-5-mini
+    litellm_params:
+      model: github_copilot/gpt-5-mini
+      supports_tool_calling: true
+      extra_headers:
+        Editor-Version: "vscode/1.85.1"
+        Editor-Plugin-Version: "copilot/1.155.0"
+        User-Agent: "GithubCopilot/1.155.0"
+
+  # Catch-all fallback: Route unknown models with proper fallback chain
+  - model_name: "*"
+    litellm_params:
+      model: github_copilot/claude-opus-4.6
+      supports_tool_calling: true
+      fallbacks: ["github_copilot/gemini-3-pro-preview", "github_copilot/gpt-5-mini"]
+      extra_headers:
+        Editor-Version: "vscode/1.85.1"
+        Editor-Plugin-Version: "copilot/1.155.0"
+        User-Agent: "GithubCopilot/1.155.0"
+
+  # Embeddings (required for semantic tool filtering)
+  - model_name: github_copilot/text-embedding-3-small
+    litellm_params:
+      model: github_copilot/text-embedding-3-small
+      extra_headers:
+        Editor-Version: "vscode/1.85.1"
+        Editor-Plugin-Version: "copilot/1.155.0"
+        User-Agent: "GithubCopilot/1.155.0"
+
+mcp_servers:
+  memory_server:
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+
+  filesystem_server:
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "./"]
+
+  sequentialthinking_server:
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]

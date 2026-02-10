@@ -1,0 +1,62 @@
+services:
+  litellm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: litellm-mcp-proxy
+    container_name: litellm-proxy
+    entrypoint: []
+    command: >
+      /bin/sh -c '
+      set -e;
+      TOKEN_FILE="/root/.config/litellm/github_copilot/access-token";
+      API_KEY_FILE="/root/.config/litellm/github_copilot/api-key.json";
+      echo "[LiteLLM] Waiting for GitHub tokens...";
+      while [ ! -f "$$TOKEN_FILE" ] || [ ! -f "$$API_KEY_FILE" ]; do
+          echo "[LiteLLM] Tokens not found. Please visit http://localhost:4001/github to authenticate.";
+          sleep 5;
+      done;
+      echo "[LiteLLM] Tokens found! Starting LiteLLM...";
+      exec litellm --config config.yaml --detailed_debug
+      '
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./:/app/workspace
+      - ./litellm_data:/root/.config/litellm
+    environment:
+      - LITELLM_MASTER_KEY=sk-1234
+      - DATABASE_URL=postgresql://postgres:password@db:5432/litellm
+    restart: unless-stopped
+
+  github-auth:
+    image: litellm-mcp-proxy
+    container_name: litellm-github-auth
+    entrypoint: []
+    command: ["python3", "run_proxy.py"]
+    ports:
+      - "4001:4001"
+    volumes:
+      - ./litellm_data:/root/.config/litellm
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: litellm-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: litellm
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
