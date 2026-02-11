@@ -1,7 +1,7 @@
 FROM ghcr.io/berriai/litellm:main-stable
 
 RUN apk add --no-cache nodejs npm git ca-certificates
-RUN npm install -g @modelcontextprotocol/server-memory @modelcontextprotocol/server-filesystem
+RUN npm install -g @modelcontextprotocol/server-memory @modelcontextprotocol/server-filesystem @modelcontextprotocol/server-sequential-thinking
 
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app

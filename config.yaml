@@ -23,6 +23,14 @@ litellm_settings:
     top_k: 5
     similarity_threshold: 0.3
 
+  # Wire MCP sequential-thinking into the model pipeline so it runs automatically
+  mcp_sequential_thinking:
+    enabled: true
+    server: sequentialthinking_server
+    apply_to_models: ["*"]
+    max_thinking_steps: 6
+    step_timeout_seconds: 10
+
 model_list:
   # Primary model: Claude Opus 4.6 with fallback to Gemini 3 Pro Preview
   - model_name: github_copilot/claude-opus-4.6
